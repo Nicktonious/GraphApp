@@ -39,6 +39,7 @@
             this.drawVertexButton = new System.Windows.Forms.Button();
             this.sheet = new System.Windows.Forms.PictureBox();
             this.btn_changeColor = new System.Windows.Forms.Button();
+            this.lb_colors = new System.Windows.Forms.ListBox();
             ((System.ComponentModel.ISupportInitialize)(this.sheet)).BeginInit();
             this.SuspendLayout();
             // 
@@ -47,7 +48,7 @@
             this.listBoxMatrix.FormattingEnabled = true;
             this.listBoxMatrix.ItemHeight = 16;
             this.listBoxMatrix.Location = new System.Drawing.Point(977, 161);
-            this.listBoxMatrix.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.listBoxMatrix.Margin = new System.Windows.Forms.Padding(4);
             this.listBoxMatrix.Name = "listBoxMatrix";
             this.listBoxMatrix.Size = new System.Drawing.Size(297, 292);
             this.listBoxMatrix.TabIndex = 6;
@@ -65,7 +66,7 @@
             // 
             this.selectButton.Image = global::SystAnalys_lr1.Properties.Resources.cursor;
             this.selectButton.Location = new System.Drawing.Point(16, 15);
-            this.selectButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.selectButton.Margin = new System.Windows.Forms.Padding(4);
             this.selectButton.Name = "selectButton";
             this.selectButton.Size = new System.Drawing.Size(60, 55);
             this.selectButton.TabIndex = 9;
@@ -75,7 +76,7 @@
             // buttonInc
             // 
             this.buttonInc.Location = new System.Drawing.Point(1153, 78);
-            this.buttonInc.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonInc.Margin = new System.Windows.Forms.Padding(4);
             this.buttonInc.Name = "buttonInc";
             this.buttonInc.Size = new System.Drawing.Size(123, 60);
             this.buttonInc.TabIndex = 8;
@@ -86,7 +87,7 @@
             // buttonAdj
             // 
             this.buttonAdj.Location = new System.Drawing.Point(977, 78);
-            this.buttonAdj.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.buttonAdj.Margin = new System.Windows.Forms.Padding(4);
             this.buttonAdj.Name = "buttonAdj";
             this.buttonAdj.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.buttonAdj.Size = new System.Drawing.Size(111, 60);
@@ -99,7 +100,7 @@
             // 
             this.deleteALLButton.Image = global::SystAnalys_lr1.Properties.Resources.deleteAll;
             this.deleteALLButton.Location = new System.Drawing.Point(288, 15);
-            this.deleteALLButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.deleteALLButton.Margin = new System.Windows.Forms.Padding(4);
             this.deleteALLButton.Name = "deleteALLButton";
             this.deleteALLButton.Size = new System.Drawing.Size(60, 55);
             this.deleteALLButton.TabIndex = 5;
@@ -110,7 +111,7 @@
             // 
             this.deleteButton.Image = global::SystAnalys_lr1.Properties.Resources.delete;
             this.deleteButton.Location = new System.Drawing.Point(220, 15);
-            this.deleteButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.deleteButton.Margin = new System.Windows.Forms.Padding(4);
             this.deleteButton.Name = "deleteButton";
             this.deleteButton.Size = new System.Drawing.Size(60, 55);
             this.deleteButton.TabIndex = 3;
@@ -121,7 +122,7 @@
             // 
             this.drawEdgeButton.Image = global::SystAnalys_lr1.Properties.Resources.edge;
             this.drawEdgeButton.Location = new System.Drawing.Point(152, 15);
-            this.drawEdgeButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.drawEdgeButton.Margin = new System.Windows.Forms.Padding(4);
             this.drawEdgeButton.Name = "drawEdgeButton";
             this.drawEdgeButton.Size = new System.Drawing.Size(60, 55);
             this.drawEdgeButton.TabIndex = 2;
@@ -132,7 +133,7 @@
             // 
             this.drawVertexButton.Image = global::SystAnalys_lr1.Properties.Resources.vertex;
             this.drawVertexButton.Location = new System.Drawing.Point(84, 15);
-            this.drawVertexButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.drawVertexButton.Margin = new System.Windows.Forms.Padding(4);
             this.drawVertexButton.Name = "drawVertexButton";
             this.drawVertexButton.Size = new System.Drawing.Size(60, 55);
             this.drawVertexButton.TabIndex = 1;
@@ -143,7 +144,7 @@
             // 
             this.sheet.BackColor = System.Drawing.SystemColors.Control;
             this.sheet.Location = new System.Drawing.Point(16, 78);
-            this.sheet.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.sheet.Margin = new System.Windows.Forms.Padding(4);
             this.sheet.Name = "sheet";
             this.sheet.Size = new System.Drawing.Size(936, 434);
             this.sheet.TabIndex = 0;
@@ -161,11 +162,26 @@
             this.btn_changeColor.UseVisualStyleBackColor = true;
             this.btn_changeColor.Click += new System.EventHandler(this.btn_changeColor_Click);
             // 
+            // lb_colors
+            // 
+            this.lb_colors.FormattingEnabled = true;
+            this.lb_colors.ItemHeight = 16;
+            this.lb_colors.Items.AddRange(new object[] {
+            "Белый",
+            "Синий",
+            "Красный",
+            "Зеленый"});
+            this.lb_colors.Location = new System.Drawing.Point(435, 12);
+            this.lb_colors.Name = "lb_colors";
+            this.lb_colors.Size = new System.Drawing.Size(212, 68);
+            this.lb_colors.TabIndex = 13;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1292, 546);
+            this.Controls.Add(this.lb_colors);
             this.Controls.Add(this.selectButton);
             this.Controls.Add(this.buttonInc);
             this.Controls.Add(this.buttonAdj);
@@ -178,7 +194,7 @@
             this.Controls.Add(this.sheet);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "Form1";
             this.Text = "Редактор графов";
             ((System.ComponentModel.ISupportInitialize)(this.sheet)).EndInit();
@@ -200,6 +216,7 @@
         private System.Windows.Forms.Button selectButton;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.Button btn_changeColor;
+        private System.Windows.Forms.ListBox lb_colors;
     }
 }
 

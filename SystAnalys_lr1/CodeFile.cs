@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -12,13 +13,15 @@ namespace SystAnalys_lr1
 {
     class Vertex
     {
+        public string Name { get; set; }
         public int x, y;
         public Brush Color { get; set; }
 
-        public Vertex(int x, int y, Brush color)
+        public Vertex(int x, int y, string name, Brush color)
         {
             this.x = x;
             this.y = y;
+            this.Name = name;
             this.Color = color;
         }
     }
@@ -26,14 +29,27 @@ namespace SystAnalys_lr1
     class Edge
     {
         public int v1, v2;
+        private int weight = 0;
+        private static int i = 0;
 
-        public Edge(int v1, int v2, int weight)
+        public Edge(Vertex v1, Vertex v2, int weight)
         {
-            this.v1 = v1;
-            this.v2 = v2;
-            this.Weight = weight;
+            this.V1 = v1;
+            this.V2 = v2;
+            this.weight = weight;
+            this.Name = ((char)(i++ + 'a')).ToString();
         }
-        public int Weight { get;set; }
+        public int Weight
+        {
+            get => weight;
+            set
+            {
+                weight = value;
+            }
+        }
+        public readonly string Name;
+        public Vertex V1 { get; set; }
+        public Vertex V2 { get; set; }
     }
 
     class DrawGraph
@@ -86,76 +102,79 @@ namespace SystAnalys_lr1
             gr.DrawEllipse(redPen, (x - R), (y - R), 2 * R, 2 * R);
         }
 
-        public void drawEdge(Vertex V1, Vertex V2, Edge E, int weight)
+        public void drawEdge(Edge e)
         {
-            if (E.v1 == E.v2)
+            var v1 = e.V1;
+            var v2 = e.V2;
+            if (v1 == v2)
             {
-                gr.DrawArc(darkGoldPen, (V1.x - 2 * R), (V1.y - 2 * R), 2 * R, 2 * R, 90, 270);
-                point = new PointF(V1.x - (int)(2.75 * R), V1.y - (int)(2.75 * R));
-                gr.DrawString(weight.ToString(), fo, br, point);
-                drawVertex(V1.x, V1.y, (E.v1 + 1).ToString(), V1.Color);
+                gr.DrawArc(darkGoldPen, (v1.x - 2 * R), (v1.y - 2 * R), 2 * R, 2 * R, 90, 270);
+                point = new PointF(v1.x - (int)(2.75 * R), v1.y - (int)(2.75 * R));
+                gr.DrawString($"{e.Name}: {e.Weight}", fo, br, point);
+                drawVertex(v1.x, v1.y, v1.Name, v1.Color);
             }
             else
             {
-                gr.DrawLine(darkGoldPen, V1.x, V1.y, V2.x, V2.y);
-                point = new PointF((V1.x + V2.x) / 2, (V1.y + V2.y) / 2);
-                gr.DrawString(weight.ToString(), fo, br, point);
-                drawVertex(V1.x, V1.y, (E.v1 + 1).ToString(), V1.Color);
-                drawVertex(V2.x, V2.y, (E.v2 + 1).ToString(), V2.Color);
+                gr.DrawLine(darkGoldPen, v1.x, v1.y, v2.x, v2.y);
+                point = new PointF((v1.x + v2.x) / 2, (v1.y + v2.y) / 2);
+                gr.DrawString($"{e.Name}: {e.Weight}", fo, br, point);
+                drawVertex(v1.x, v1.y, v1.Name, v1.Color);
+                drawVertex(v2.x, v2.y, v2.Name, v2.Color);
             }
         }
 
-        public void drawALLGraph(List<Vertex> V, List<Edge> E)
+        public void DrawALLGraph(List<Vertex> V, List<Edge> E)
         {
             //рисуем ребра
             for (int i = 0; i < E.Count; i++)
-            {
-                if (E[i].v1 == E[i].v2)
+                foreach (Edge e in E)
                 {
-                    gr.DrawArc(darkGoldPen, (V[E[i].v1].x - 2 * R), (V[E[i].v1].y - 2 * R), 2 * R, 2 * R, 90, 270);
-                    point = new PointF(V[E[i].v1].x - (int)(2.75 * R), V[E[i].v1].y - (int)(2.75 * R));
-                    gr.DrawString(E[i].Weight.ToString(), fo, br, point);
+                    drawEdge(e);
                 }
-                else
-                {
-                    gr.DrawLine(darkGoldPen, V[E[i].v1].x, V[E[i].v1].y, V[E[i].v2].x, V[E[i].v2].y);
-                    point = new PointF((V[E[i].v1].x + V[E[i].v2].x) / 2, (V[E[i].v1].y + V[E[i].v2].y) / 2);
-                    gr.DrawString(E[i].Weight.ToString(), fo, br, point);
-                }
-            }
             //рисуем вершины
             for (int i = 0; i < V.Count; i++)
             {
-                drawVertex(V[i].x, V[i].y, (i + 1).ToString(), V[i].Color);
+                drawVertex(V[i].x, V[i].y, V[i].Name, V[i].Color);
             }
         }
 
         //заполняет матрицу смежности
-        public void fillAdjacencyMatrix(int numberV, List<Edge> E, int[,] matrix)
+        public void FillAdjacencyMatrix(int numberV, List<Edge> E, List<Vertex> V, int[,] matrix)
         {
             for (int i = 0; i < numberV; i++)
                 for (int j = 0; j < numberV; j++)
                     matrix[i, j] = 0;
-            for (int i = 0; i < E.Count; i++)
+
+            for (int i = 0; i < numberV; i++)
             {
-                matrix[E[i].v1, E[i].v2] = 1;
-                matrix[E[i].v2, E[i].v1] = 1;
+                for (int j = 0; j < numberV; j++)
+                {
+                    var temp_e = E.Find(e => e.V1 == V[i] && e.V2 == V[j]);
+                    if (temp_e != null)
+                    {
+                        matrix[i, j] = temp_e.Weight;
+                        matrix[j, i] = temp_e.Weight;
+                    }
+                }
             }
         }
 
         //заполняет матрицу инцидентности
-        public void fillIncidenceMatrix(int numberV, List<Edge> E, int[,] matrix)
+        public void FillIncidenceMatrix(int numberV, List<Edge> E, List<Vertex> V, int[,] matrix)
         {
             for (int i = 0; i < numberV; i++)
                 for (int j = 0; j < E.Count; j++)
                     matrix[i, j] = 0;
-            for (int i = 0; i < E.Count; i++)
+
+            for (int i = 0; i < numberV; i++)
             {
-                matrix[E[i].v1, i] = 1;
-                matrix[E[i].v2, i] = 1;
+                for (int j = 0; j < E.Count; j++)
+                {
+                    if (E[j].V1 == V[i] || E[j].V2 == V[i]) matrix[i, j] = 1;
+                }
             }
         }
 
-        
+
     }
 }
