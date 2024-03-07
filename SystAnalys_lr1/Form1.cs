@@ -9,19 +9,53 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Drawing.Imaging;
+using System.Drawing.Text;
 
 namespace SystAnalys_lr1
 {
     public partial class Form1 : Form
     {
+        int CountV = 1;
         DrawGraph G;
         List<Vertex> V;
         List<Edge> E;
         int[,] AMatrix; //матрица смежности
         int[,] IMatrix; //матрица инцидентности
 
-        int selected1; //выбранные вершины, для соединения линиями
-        int selected2;
+        private List<Vertex> selection = new List<Vertex>();
+        private bool onSelectPair = false;
+        Vertex Selected1
+        {
+            get
+            {
+                if (selection.Count > 0) return selection[0];
+                return null;
+            }
+        }
+        Vertex Selected2
+        {
+            get
+            {
+                if (selection.Count == 2 && onSelectPair) return selection[1];
+                return null;
+            }
+        }
+        public Brush Color
+        {
+            get
+            {
+                var colors = new Dictionary<string, Brush>()
+                {
+                    { "Белый", Brushes.White },
+                    { "Синий", Brushes.Blue },
+                    { "Красный", Brushes.Red },
+                    { "Зеленый", Brushes.Green }
+                };
+                var color = lb_colors?.SelectedItem?.ToString() ?? "";
+                if (colors.ContainsKey(color)) return colors[color];
+                return Brushes.White;
+            }
+        }
 
         public bool ColorFlag = false;
 
@@ -42,9 +76,10 @@ namespace SystAnalys_lr1
             drawEdgeButton.Enabled = true;
             deleteButton.Enabled = true;
             G.clearSheet();
-            G.drawALLGraph(V, E);
+            G.DrawALLGraph(V, E);
             sheet.Image = G.GetBitmap();
-            selected1 = -1;
+            //selected1 = -1;
+            onSelectPair = false;
         }
 
         //кнопка - рисовать вершину
@@ -55,7 +90,7 @@ namespace SystAnalys_lr1
             drawEdgeButton.Enabled = true;
             deleteButton.Enabled = true;
             G.clearSheet();
-            G.drawALLGraph(V, E);
+            G.DrawALLGraph(V, E);
             sheet.Image = G.GetBitmap();
         }
 
@@ -67,10 +102,10 @@ namespace SystAnalys_lr1
             drawVertexButton.Enabled = true;
             deleteButton.Enabled = true;
             G.clearSheet();
-            G.drawALLGraph(V, E);
+            G.DrawALLGraph(V, E);
             sheet.Image = G.GetBitmap();
-            selected1 = -1;
-            selected2 = -1;
+
+            onSelectPair = true;
         }
 
         //кнопка - удалить элемент
@@ -80,8 +115,9 @@ namespace SystAnalys_lr1
             selectButton.Enabled = true;
             drawVertexButton.Enabled = true;
             drawEdgeButton.Enabled = true;
+            onSelectPair = false;
             G.clearSheet();
-            G.drawALLGraph(V, E);
+            G.DrawALLGraph(V, E);
             sheet.Image = G.GetBitmap();
         }
 
@@ -118,151 +154,78 @@ namespace SystAnalys_lr1
 
         private void sheet_MouseClick(object sender, MouseEventArgs e)
         {
+            Select(e.X, e.Y);
             //нажата кнопка "выбрать вершину", ищем степень вершины
             if (selectButton.Enabled == false)
             {
-                for (int i = 0; i < V.Count; i++)
+                if (Selected1 != null)
                 {
-                    if (Math.Pow((V[i].x - e.X), 2) + Math.Pow((V[i].y - e.Y), 2) <= G.R * G.R)
-                    {
-                        if (selected1 != -1)
-                        {
-                            selected1 = -1;
-                            G.clearSheet();
-                            G.drawALLGraph(V, E);
-                            sheet.Image = G.GetBitmap();
-                        }
-                        if (selected1 == -1)
-                        {
-                            G.drawSelectedVertex(V[i].x, V[i].y);
-                            selected1 = i;
-                            sheet.Image = G.GetBitmap();
-                            createAdjAndOut();
-                            listBoxMatrix.Items.Clear();
-                            int degree = 0;
-                            for (int j = 0; j < V.Count; j++)
-                                degree += AMatrix[selected1, j];
-                            listBoxMatrix.Items.Add("Степень вершины №" + (selected1 + 1) + " равна " + degree);
-                            break;
-                        }
-                    }
+                    Selected1.Color = Color;
+                    ClearSelection();
                 }
+                var selected_v = GetSelectedEdge(e.X, e.Y) ?? GetSelectedLoop(e.X, e.Y);
+                if (selected_v != null)
+                {
+                    var w = ShowMyDialogBox();
+                    selected_v.Weight = w;
+                }
+                G.clearSheet();
+                G.DrawALLGraph(V, E);
+                sheet.Image = G.GetBitmap();
+                return;
+
             }
             //нажата кнопка "рисовать вершину"
             if (drawVertexButton.Enabled == false)
             {
-                var color = !ColorFlag ? Brushes.Red : Brushes.Green;
-                V.Add(new Vertex(e.X, e.Y, color));
-                G.drawVertex(e.X, e.Y, V.Count.ToString(), color);
-                sheet.Image = G.GetBitmap();
+                DrawVertex(e.X, e.Y, (CountV++).ToString(), Color);
             }
             //нажата кнопка "рисовать ребро"
             if (drawEdgeButton.Enabled == false)
             {
+                //Select(e.X, e.Y);
                 if (e.Button == MouseButtons.Left)
                 {
-                    for (int i = 0; i < V.Count; i++)
-                    {
-                        if (Math.Pow((V[i].x - e.X), 2) + Math.Pow((V[i].y - e.Y), 2) <= G.R * G.R)
-                        {
-                            if (selected1 == -1)
-                            {
-                                G.drawSelectedVertex(V[i].x, V[i].y);
-                                selected1 = i;
-                                sheet.Image = G.GetBitmap();
-                                break;
-                            }
-                            if (selected2 == -1)
-                            {
-                                G.drawSelectedVertex(V[i].x, V[i].y);
-                                selected2 = i;
-                                int w = ShowMyDialogBox();
-                                var temp_e = new Edge(selected1, selected2, w);
-                                E.Add(temp_e);
-                                G.drawEdge(V[selected1], V[selected2], E[E.Count - 1], temp_e.Weight);
-                                selected1 = -1;
-                                selected2 = -1;
-                                sheet.Image = G.GetBitmap();
-                                break;
-                            }
-                        }
-                    }
+                    //var selected_v = V.Find(v => Math.Pow((v.x - e.X), 2) + Math.Pow((v.y - e.Y), 2) <= G.R * G.R);
+                    if (Selected1 != null && Selected2 != null)
+                        DrawEdge(Selected1, Selected2);
                 }
+
                 if (e.Button == MouseButtons.Right)
                 {
-                    if ((selected1 != -1) &&
-                        (Math.Pow((V[selected1].x - e.X), 2) + Math.Pow((V[selected1].y - e.Y), 2) <= G.R * G.R))
-                    {
-                        var color = !ColorFlag ? Brushes.Red : Brushes.Green;
-                        G.drawVertex(V[selected1].x, V[selected1].y, (selected1 + 1).ToString(), color);
-                        selected1 = -1;
-                        sheet.Image = G.GetBitmap();
-                    }
+                    ClearSelection();
                 }
             }
+
             //нажата кнопка "удалить элемент"
             if (deleteButton.Enabled == false)
             {
                 bool flag = false; //удалили ли что-нибудь по ЭТОМУ клику
                 //ищем, возможно была нажата вершина
-                for (int i = 0; i < V.Count; i++)
+
+                if (Selected1 != null)
                 {
-                    if (Math.Pow((V[i].x - e.X), 2) + Math.Pow((V[i].y - e.Y), 2) <= G.R * G.R)
-                    {
-                        for (int j = 0; j < E.Count; j++)
-                        {
-                            if ((E[j].v1 == i) || (E[j].v2 == i))
-                            {
-                                E.RemoveAt(j);
-                                j--;
-                            }
-                            else
-                            {
-                                if (E[j].v1 > i) E[j].v1--;
-                                if (E[j].v2 > i) E[j].v2--;
-                            }
-                        }
-                        V.RemoveAt(i);
-                        flag = true;
-                        break;
-                    }
+                    var v_count = V.Count;
+                    RemoveVertex(Selected1);
+                    ClearSelection();
+                    if (v_count != V.Count) flag = true;
                 }
                 //ищем, возможно было нажато ребро
-                if (!flag)
+                else
                 {
-                    for (int i = 0; i < E.Count; i++)
+                    Edge selected_e = GetSelectedLoop(e.X, e.Y) ?? GetSelectedEdge(e.X, e.Y);
+                    if (selected_e != null)
                     {
-                        if (E[i].v1 == E[i].v2) //если это петля
-                        {
-                            if ((Math.Pow((V[E[i].v1].x - G.R - e.X), 2) + Math.Pow((V[E[i].v1].y - G.R - e.Y), 2) <= ((G.R + 2) * (G.R + 2))) &&
-                                (Math.Pow((V[E[i].v1].x - G.R - e.X), 2) + Math.Pow((V[E[i].v1].y - G.R - e.Y), 2) >= ((G.R - 2) * (G.R - 2))))
-                            {
-                                E.RemoveAt(i);
-                                flag = true;
-                                break;
-                            }
-                        }
-                        else //не петля
-                        {
-                            if (((e.X - V[E[i].v1].x) * (V[E[i].v2].y - V[E[i].v1].y) / (V[E[i].v2].x - V[E[i].v1].x) + V[E[i].v1].y) <= (e.Y + 4) &&
-                                ((e.X - V[E[i].v1].x) * (V[E[i].v2].y - V[E[i].v1].y) / (V[E[i].v2].x - V[E[i].v1].x) + V[E[i].v1].y) >= (e.Y - 4))
-                            {
-                                if ((V[E[i].v1].x <= V[E[i].v2].x && V[E[i].v1].x <= e.X && e.X <= V[E[i].v2].x) ||
-                                    (V[E[i].v1].x >= V[E[i].v2].x && V[E[i].v1].x >= e.X && e.X >= V[E[i].v2].x))
-                                {
-                                    E.RemoveAt(i);
-                                    flag = true;
-                                    break;
-                                }
-                            }
-                        }
+                        E.Remove(selected_e);
+                        flag = true;
                     }
+
                 }
                 //если что-то было удалено, то обновляем граф на экране
                 if (flag)
                 {
                     G.clearSheet();
-                    G.drawALLGraph(V, E);
+                    G.DrawALLGraph(V, E);
                     sheet.Image = G.GetBitmap();
                 }
             }
@@ -272,17 +235,23 @@ namespace SystAnalys_lr1
         private void createAdjAndOut()
         {
             AMatrix = new int[V.Count, V.Count];
-            G.fillAdjacencyMatrix(V.Count, E, AMatrix);
+            G.FillAdjacencyMatrix(V.Count, E, V, AMatrix);
             listBoxMatrix.Items.Clear();
             string sOut = "    ";
             for (int i = 0; i < V.Count; i++)
-                sOut += (i + 1) + " ";
+            {
+                sOut += V[i].Name + "  ";
+            }
             listBoxMatrix.Items.Add(sOut);
             for (int i = 0; i < V.Count; i++)
             {
-                sOut = (i + 1) + " | ";
+                sOut = V[i].Name + " | ";
                 for (int j = 0; j < V.Count; j++)
-                    sOut += AMatrix[i, j] + " ";
+                {
+                    string t = (AMatrix[i, j]).ToString();
+                    if (t.Length < 2) sOut += t + "  ";
+                    else sOut += t + " ";
+                }
                 listBoxMatrix.Items.Add(sOut);
             }
         }
@@ -293,15 +262,17 @@ namespace SystAnalys_lr1
             if (E.Count > 0)
             {
                 IMatrix = new int[V.Count, E.Count];
-                G.fillIncidenceMatrix(V.Count, E, IMatrix);
+                //var e_names = E.Select(e => e.Name).ToArray();
+                //var v_names = V.Select(v => v.Name).ToArray(); 
+                G.FillIncidenceMatrix(V.Count, E, V, IMatrix);
                 listBoxMatrix.Items.Clear();
                 string sOut = "    ";
                 for (int i = 0; i < E.Count; i++)
-                    sOut += (char)('a' + i) + " ";
+                    sOut += E[i].Name + " ";
                 listBoxMatrix.Items.Add(sOut);
                 for (int i = 0; i < V.Count; i++)
                 {
-                    sOut = (i + 1) + " | ";
+                    sOut = (V[i].Name) + " | ";
                     for (int j = 0; j < E.Count; j++)
                         sOut += IMatrix[i, j] + " ";
                     listBoxMatrix.Items.Add(sOut);
@@ -318,19 +289,21 @@ namespace SystAnalys_lr1
             //1-white 2-black
             int[] color = new int[V.Count];
             for (int i = 0; i < V.Count - 1; i++)
+            {
                 for (int j = i + 1; j < V.Count; j++)
                 {
                     for (int k = 0; k < V.Count; k++)
                         color[k] = 1;
                     DFSchain(i, j, E, color, (i + 1).ToString());
                 }
+            }
         }
 
         //обход в глубину. поиск элементарных цепей. (1-white 2-black)
         private void DFSchain(int u, int endV, List<Edge> E, int[] color, string s)
         {
             //вершину не следует перекрашивать, если u == endV (возможно в нее есть несколько путей)
-            if (u != endV)  
+            if (u != endV)
                 color[u] = 2;
             else
             {
@@ -461,7 +434,7 @@ namespace SystAnalys_lr1
             {
                 w = Convert.ToInt32(testDialog.TextBox1.Text);
             }
-            
+
             testDialog.Dispose();
             return w;
         }
@@ -474,6 +447,69 @@ namespace SystAnalys_lr1
             drawEdgeButton.Enabled = true;
             deleteButton.Enabled = true;
             ColorFlag = !ColorFlag;
+        }
+
+        private void Select(int x, int y)
+        {
+            var selected_v = V.Find(v => Math.Pow((v.x - x), 2) + Math.Pow((v.y - y), 2) <= G.R * G.R);
+            if (selected_v != null)
+            {
+                selection.Add(selected_v);
+                if (selection.Count == 3)
+                {
+                    selection.RemoveAt(0);
+                }
+            }
+        }
+        private void ClearSelection()
+        {
+            selection.Clear();
+        }
+
+        private void DrawVertex(int x, int y, string name, Brush color)
+        {
+            V.Add(new Vertex(x, y, name, color));
+            G.drawVertex(x, y, name, color);
+            sheet.Image = G.GetBitmap();
+        }
+        private void DrawEdge(Vertex v1, Vertex v2)
+        {
+            // графически выделяет первую пикнутую вершину
+            //G.drawSelectedVertex(v1.x, v1.y);
+            int w = ShowMyDialogBox();
+            var temp_e = new Edge(v1, v2, w);
+            E.Add(temp_e);
+            G.drawEdge(temp_e);
+
+
+            sheet.Image = G.GetBitmap();
+
+            ClearSelection();
+        }
+        private void RemoveVertex(Vertex v)
+        {
+            var edge = E.RemoveAll(e => (e.V1 == v) || (e.V2 == v));
+            V.Remove(v);
+        }
+        private Edge GetSelectedEdge(int x, int y)
+        {
+            var selected_e = E.Find(ed => (((x - ed.V1.x) * (ed.V2.y - ed.V1.y) / (ed.V2.x - ed.V1.x) + ed.V1.y) <= (y + 4) &&
+                ((x - ed.V1.x) * (ed.V2.y - ed.V1.y) / (ed.V2.x - ed.V1.x) + ed.V1.y) >= (y - 4)));
+
+            if (selected_e != null) if ((selected_e.V1.x <= selected_e.V2.x && selected_e.V1.x <= x && x <= selected_e.V2.x) || (selected_e.V1.x >= selected_e.V2.x && selected_e.V1.x >= x && x >= selected_e.V2.x))
+                {
+                    return selected_e;
+                }
+            return null;
+        }
+        private Edge GetSelectedLoop(int x, int y)
+        {
+            var selected_e = E.Find(edge => (Math.Pow((edge.V1.x - G.R - x), 2) + Math.Pow((edge.V1.y - G.R - y), 2) <= ((G.R + 2) * (G.R + 2))) &&
+                                (Math.Pow((edge.V1.x - G.R - x), 2) + Math.Pow((edge.V1.y - G.R - y), 2) >= ((G.R - 2) * (G.R - 2))));
+            if (selected_e != null)
+                if (selected_e.V1 == selected_e.V2) return selected_e;
+
+            return null;
         }
     }
 }
