@@ -11,6 +11,75 @@ using System.Windows.Forms;
 
 namespace SystAnalys_lr1
 {
+
+    class DijkstraAlgorithm
+    {
+        public Dictionary<Vertex, int> ShortestPath(Graph graph, Vertex source)
+        {
+            // Инициализация кратчайших расстояний до всех вершин в графе
+            var distances = new Dictionary<Vertex, int>();
+            foreach (var vertex in graph.Vertices)
+            {
+                distances[vertex] = int.MaxValue;
+            }
+            distances[source] = 0;
+
+            // Очередь с приоритетом для обработки вершин
+            var queue = new SortedSet<(int, Vertex)>();
+            queue.Add((0, source));
+
+            while (queue.Count > 0)
+            {
+                var (distance, currentVertex) = queue.First();
+                queue.Remove(queue.First());
+
+                // Просмотр смежных вершин
+                foreach (var edge in graph.GetEdgesFromVertex(currentVertex))
+                {
+                    var neighbor = edge.GetOtherVertex(currentVertex);
+                    var totalDistance = distance + edge.Weight;
+
+                    if (totalDistance < distances[neighbor])
+                    {
+                        // Обновление кратчайшего расстояния и добавление вершины в очередь
+                        distances[neighbor] = totalDistance;
+                        queue.Add((totalDistance, neighbor));
+                    }
+                }
+            }
+
+            return distances;
+        }
+    }
+
+    class Graph
+    {
+        public List<Vertex> Vertices { get; }
+        public List<Edge> Edges { get; }
+
+        public Graph()
+        {
+            Vertices = new List<Vertex>();
+            Edges = new List<Edge>();
+        }
+
+        public void AddVertex(Vertex vertex)
+        {
+            Vertices.Add(vertex);
+        }
+
+        public void AddEdge(Edge edge)
+        {
+            Edges.Add(edge);
+        }
+
+        public List<Edge> GetEdgesFromVertex(Vertex vertex)
+        {
+            return Edges.Where(e => e.V1 == vertex || e.V2 == vertex).ToList();
+        }
+    }
+
+
     class Vertex
     {
         public string Name { get; set; }
@@ -46,6 +115,16 @@ namespace SystAnalys_lr1
             {
                 weight = value;
             }
+        }
+
+        public Vertex GetOtherVertex(Vertex vertex)
+        {
+            if (vertex == V1)
+                return V2;
+            else if (vertex == V2)
+                return V1;
+            else
+                throw new ArgumentException("Given vertex is not connected to this edge");
         }
         public readonly string Name;
         public Vertex V1 { get; set; }
